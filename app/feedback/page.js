@@ -20,40 +20,21 @@ export default function Feedback() {
     setLoading(true);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
       const response = await fetch("/api/analyze-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedback }),
-        signal: controller.signal
       });
 
-      clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error("Failed to analyze feedback");
+      }
 
       const data = await response.json();
-      
-      if (data.fallback) {
-        console.log("Using fallback response");
-        success("Analysis complete with basic sentiment detection");
-      } else {
-        success("Feedback analyzed successfully!");
-      }
-      
       setResult(data);
+      success("Feedback analyzed successfully!");
     } catch (err) {
-      console.error("Error analyzing feedback:", err);
-      showError("Taking too long to analyze. Using basic sentiment analysis.");
-      
-      // Set basic result on error
-      setResult({
-        sentiment: "Neutral",
-        confidence: 50,
-        rating: 3,
-        customerResponse: "Thank you for your feedback. We'll review it carefully.",
-        offline: true
-      });
+      showError("Error analyzing feedback. Please try again.");
     }
 
     setLoading(false);
